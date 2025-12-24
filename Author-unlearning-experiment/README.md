@@ -145,6 +145,7 @@ In this project, I:
 The code, data descriptions, model details, and result CSVs/plots in this repository are meant to serve as a small, reproducible testbed for **author-level machine unlearning** in language models.
 
 ## Citation
+
 If you use this work or build upon these experiments, please cite this repository:
 
 @misc{Unlearning_Experiments,
@@ -152,9 +153,8 @@ author = {Sakshi Vishwakarma},
 title = {Unlearning Experiments: Author_Unlearning_Experiment},
 year = {2025},
 publisher = {GitHub},
-url = {[https://github.com/Sakshiv0104/Unlearning_Experiments/new/main/Author-unlearning-experiment]}
+url = {https://github.com/Sakshiv0104/Unlearning_Experiments/tree/main/Author-unlearning-experiment}
 }
-
 
 ## License
 
