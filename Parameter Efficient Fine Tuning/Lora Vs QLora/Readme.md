@@ -48,6 +48,46 @@ $$
 \mathcal{L}_{\text{KL}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \beta \cdot D_{\text{KL}}(p_{\theta_{\text{ref}}} \parallel p_\theta)\big|_{\mathcal{D}_r}
 $$
 
+## Parameters & Hyperparameters
+
+### Model Configuration
+
+| Parameter | Value |
+|---|---|
+| Base model | GPT-Neo 125M (`EleutherAI/gpt-neo-125m`) |
+| Adapter target modules | `q_proj`, `v_proj` |
+| LoRA $\alpha$ | $2 \times r$ |
+| LoRA dropout | 0.05 |
+| Optimizer | AdamW |
+| Random seed | 42 |
+
+### Dataset
+
+| Parameter | Value |
+|---|---|
+| Forget set size | 200 sequences × 200 tokens |
+| Forget source | ETH Zürich LM Extraction Benchmark (prefix + suffix pairs) |
+| Retain corpus | 50,000 tokens (fixed slice) |
+| Train sequence length | 200 tokens |
+| Batch size | 4 |
+| PPL window size | 512 tokens |
+| PPL stride | 256 tokens |
+
+### Experiment Grids
+
+| Setting | Ranks Tested | Bits Tested |
+|---|---|---|
+| LoRA | 2, 4, 8, 16, 32 | — (full precision) |
+| QLoRA | 2, 4, 8, 16, 32 | 4-bit (NF4), 8-bit (INT8), 16-bit (FP16), 32-bit (FP32) |
+
+### Unlearning Method Hyperparameters
+
+| Method | Learning Rate | Steps | Key Hyperparameter | Gradient Clip |
+|---|---|---|---|---|
+| GA | `1e-5` | 300 | — | 1.0 |
+| GD | `5e-5` | 150 | $\lambda = 5.0$ (retain weight) | 2.0 |
+| KL | `1e-5` | 400 | $\beta = 5.0$ (KL penalty) | 1.0 |
+
 ---
 
 ## Results
@@ -110,3 +150,12 @@ Once you hit 16-bit precision, the quantization noise practically vanishes. The 
 **3. KL Divergence (KL) — The Safest Choice**
 * **In LoRA:** KL is the safest, most stable method. It tightly controls the Retain PPL, never letting the model degrade, though it sacrifices a bit of forgetting power to maintain that safety.
 * **In QLoRA:** Because KL relies on comparing the precise token distributions between the base model and the adapter, the "squished" 4-bit and 8-bit weights slightly disrupt this delicate comparison. It still works well at 8-bit, but KL truly shines when precision is high (16-bit/32-bit).
+
+## References
+
+- Hu et al. (2022). *LoRA: Low-Rank Adaptation of Large Language Models.* ICLR 2022.
+- Dettmers et al. (2023). *QLoRA: Efficient Finetuning of Quantized LLMs.* NeurIPS 2023.
+- Carlini et al. (2023). *Quantifying Memorization Across Neural Language Models.* ICLR 2023.
+- Yao et al. (2023). *Large Language Model Unlearning.* arXiv:2310.10683.
+- Maini et al. (2024). *TOFU: A Task of Fictitious Unlearning for LLMs.* arXiv:2401.06121.
+- ETH Zürich LM Extraction Benchmark: https://github.com/ethz-spylab/lm-extraction-benchmark-data
