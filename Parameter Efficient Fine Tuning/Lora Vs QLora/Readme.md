@@ -2,14 +2,14 @@
 
 An empirical study comparing parameter-efficient unlearning methods across adapter ranks and quantization precisions on a causal language model.
 
-## 🧠 The Problem: Machine Unlearning
+## The Problem: Machine Unlearning
 Large Language Models (LLMs) often memorize their training data. If a model memorizes sensitive, private, or copyrighted text, the traditional fix is to retrain the entire model from scratch without that data—a process that is prohibitively expensive and time-consuming.
 
 **Machine Unlearning** solves this by surgically removing specific knowledge. The goal is to make the model "forget" specific data (measured by a high Perplexity on the **Forget Set**, $\mathcal{D}_f$) while keeping its general language skills perfectly intact (measured by a low Perplexity on the **Retain Set**, $\mathcal{D}_r$).
 
 ---
 
-## 🛠️ The Tools: PEFT, LoRA, and QLoRA
+## The Tools: PEFT, LoRA, and QLoRA
 
 Instead of expensive full-model fine-tuning, this project uses **Parameter-Efficient Fine-Tuning (PEFT)** to perform the unlearning.
 
@@ -23,7 +23,7 @@ AI models take up a massive amount of VRAM (graphics card memory). **QLoRA** sol
 
 ---
 
-## 🔬 Unlearning Objectives (The Methods)
+## Unlearning Objectives (The Methods)
 
 We tested three different mathematical approaches to tell the LoRA adapter how to unlearn the data. All rely on maximizing the Cross-Entropy loss ($\mathcal{L}_{\text{CE}}$) on the forget set, but they differ in how they protect the retain set:
 
@@ -38,9 +38,9 @@ We tested three different mathematical approaches to tell the LoRA adapter how t
 
 ---
 
-## 📊 Results
+## Results
 
-*Metrics are evaluated using Perplexity (PPL). Format: **Forget PPL / Retain PPL**.* *Target: **Forget ↑** (higher is better) and **Retain ↓** (lower is better).*
+*Metrics are evaluated using Perplexity (PPL). Format: **Forget PPL / Retain PPL**.* <br>*Target: **Forget ↑** (higher is better) and **Retain ↓** (lower is better).*
 
 **Baseline (No Unlearning):** Forget PPL: **~11.97** | Retain PPL: **~36.94**
 
@@ -73,7 +73,7 @@ We tested three different mathematical approaches to tell the LoRA adapter how t
 
 ---
 
-## 💡 Discussion & Takeaways
+## Discussion & Takeaways
 
 ### LoRA vs. QLoRA: The Impact of Quantization
 **1. 4-bit QLoRA completely breaks unlearning.**
@@ -91,10 +91,10 @@ Once you hit 16-bit precision, the quantization noise practically vanishes. The 
 * **In LoRA:** It works, but it's dangerous at higher ranks. Because there is no "safety net" telling the model to preserve its general knowledge, high-rank GA damages the model's overall fluency while forgetting.
 * **In QLoRA:** GA is incredibly sensitive to quantization noise. At 4-bit, it completely flatlines. 
 
-**2. Gradient Difference (GD) — *The MVP***
-* **In LoRA:** This was our most successful method. It achieved the highest Forget PPL of the entire study (**83.79** at Rank 32) while keeping the Retain PPL completely stable at 36.21. It proves that explicitly balancing "forgetting" and "retaining" in the loss function works beautifully.
+**2. Gradient Difference (GD) — The MVP**
+* **In LoRA:** This was our most successful method. It achieved the highest Forget PPL of the entire study (**83.79** at Rank 32) while keeping the Retain PPL perfectly stable at 36.21. It proves that explicitly balancing "forgetting" and "retaining" in the loss function works beautifully.
 * **In QLoRA:** GD's explicit retain-check helps it survive 8-bit quantization much better than GA, keeping the model relatively fluent while still inducing heavy forgetting.
 
-**3. KL Divergence (KL) — *The Safest Choice***
+**3. KL Divergence (KL) — The Safest Choice**
 * **In LoRA:** KL is the safest, most stable method. It tightly controls the Retain PPL, never letting the model degrade, though it sacrifices a bit of forgetting power to maintain that safety.
 * **In QLoRA:** Because KL relies on comparing the precise token distributions between the base model and the adapter, the "squished" 4-bit and 8-bit weights slightly disrupt this delicate comparison. It still works well at 8-bit, but KL truly shines when precision is high (16-bit/32-bit).
