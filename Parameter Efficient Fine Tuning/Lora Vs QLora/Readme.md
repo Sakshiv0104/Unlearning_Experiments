@@ -29,15 +29,24 @@ We tested three different mathematical approaches to tell the LoRA adapter how t
 
 ### 1. Gradient Ascent (GA)
 Reverses the training signal. Aggressively forgets, but risks high collateral damage to general knowledge.
-$$\mathcal{L}_{\text{GA}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f)$$
+
+$$
+\mathcal{L}_{\text{GA}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f)
+$$
 
 ### 2. Gradient Difference (GD)
 Balances forgetting with an explicit regularization term to protect general knowledge.
-$$\mathcal{L}_{\text{GD}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \lambda \cdot \mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_r)$$
+
+$$
+\mathcal{L}_{\text{GD}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \lambda \cdot \mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_r)
+$$
 
 ### 3. KL Divergence (KL)
 Penalizes the model for deviating from the frozen base model's token distribution, offering the safest retain guarantee.
-$$\mathcal{L}_{\text{KL}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \beta \cdot D_{\text{KL}}(p_{\theta_{\text{ref}}} \parallel p_\theta)\big|_{\mathcal{D}_r}$$
+
+$$
+\mathcal{L}_{\text{KL}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \beta \cdot D_{\text{KL}}(p_{\theta_{\text{ref}}} \parallel p_\theta)\big|_{\mathcal{D}_r}
+$$
 
 ---
 
