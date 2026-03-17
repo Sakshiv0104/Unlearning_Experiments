@@ -25,22 +25,26 @@ AI models take up a massive amount of VRAM (graphics card memory). **QLoRA** sol
 
 ## Unlearning Objectives (The Methods)
 
-We tested three different mathematical approaches to tell the LoRA adapter how to unlearn the data. All rely on maximizing the Cross-Entropy loss ($\mathcal{L}_{\text{CE}}$) on the forget set, but they differ in how they protect the retain set:
+We tested three different mathematical approaches to tell the LoRA adapter how to unlearn the data. All rely on maximizing the Cross-Entropy loss ($\mathcal{L}_{\text{CE}}$) on the forget set, but they differ in how they protect the retain set.
 
-1. **Gradient Ascent (GA):** Reverses the training signal. Aggressively forgets, but risks high collateral damage to general knowledge.
-   $$\mathcal{L}_{\text{GA}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f)$$
+### 1. Gradient Ascent (GA)
+Reverses the training signal. Aggressively forgets, but risks high collateral damage to general knowledge.
+$$\mathcal{L}_{\text{GA}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f)$$
 
-2. **Gradient Difference (GD):** Balances forgetting with an explicit regularization term to protect general knowledge.
-   $$\mathcal{L}_{\text{GD}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \lambda \cdot \mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_r)$$
+### 2. Gradient Difference (GD)
+Balances forgetting with an explicit regularization term to protect general knowledge.
+$$\mathcal{L}_{\text{GD}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \lambda \cdot \mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_r)$$
 
-3. **KL Divergence (KL):** Penalizes the model for deviating from the frozen base model's token distribution, offering the safest retain guarantee.
-   $$\mathcal{L}_{\text{KL}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \beta \cdot D_{\text{KL}}(p_{\theta_{\text{ref}}} \parallel p_\theta)\big|_{\mathcal{D}_r}$$
+### 3. KL Divergence (KL)
+Penalizes the model for deviating from the frozen base model's token distribution, offering the safest retain guarantee.
+$$\mathcal{L}_{\text{KL}} = -\mathcal{L}_{\text{CE}}(\theta, \mathcal{D}_f) + \beta \cdot D_{\text{KL}}(p_{\theta_{\text{ref}}} \parallel p_\theta)\big|_{\mathcal{D}_r}$$
 
 ---
 
 ## Results
 
-*Metrics are evaluated using Perplexity (PPL). Format: **Forget PPL / Retain PPL**.* <br>*Target: **Forget ↑** (higher is better) and **Retain ↓** (lower is better).*
+*Metrics are evaluated using Perplexity (PPL). Format: **Forget PPL / Retain PPL**.*
+*Target: **Forget ↑** (higher is better) and **Retain ↓** (lower is better).*
 
 **Baseline (No Unlearning):** Forget PPL: **~11.97** | Retain PPL: **~36.94**
 
@@ -77,8 +81,7 @@ We tested three different mathematical approaches to tell the LoRA adapter how t
 
 ### LoRA vs. QLoRA: The Impact of Quantization
 **1. 4-bit QLoRA completely breaks unlearning.**
-Across every single method and rank, 4-bit quantization failed. It barely nudged the Forget Perplexity (hovering around 21.5, compared to the baseline 11.97), while simultaneously ruining the model's general language skills (Retain Perplexity shot up to ~55). 
-* *Takeaway:* The approximation noise from 4-bit quantization is simply too loud. The unlearning signal gets scrambled, and the adapter ruins the model without actually forgetting the target data.
+Across every single method and rank, 4-bit quantization failed. It barely nudged the Forget Perplexity (hovering around 21.5, compared to the baseline 11.97), while simultaneously ruining the model's general language skills (Retain Perplexity shot up to ~55). The approximation noise from 4-bit quantization is simply too loud. The unlearning signal gets scrambled, and the adapter ruins the model without actually forgetting the target data.
 
 **2. 8-bit is the Minimum Viable Precision.**
 At 8-bit, the unlearning signal successfully pushes through the noise. It successfully forgets the data, but it carries a slight "quantization tax"—the model's general fluency (Retain PPL) is consistently slightly worse (~40) than it is in full-precision LoRA (~36).
@@ -92,7 +95,7 @@ Once you hit 16-bit precision, the quantization noise practically vanishes. The 
 * **In QLoRA:** GA is incredibly sensitive to quantization noise. At 4-bit, it completely flatlines. 
 
 **2. Gradient Difference (GD) — The MVP**
-* **In LoRA:** This was our most successful method. It achieved the highest Forget PPL of the entire study (**83.79** at Rank 32) while keeping the Retain PPL perfectly stable at 36.21. It proves that explicitly balancing "forgetting" and "retaining" in the loss function works beautifully.
+* **In LoRA:** This was our most successful method. It achieved the highest Forget PPL of the entire study (83.79 at Rank 32) while keeping the Retain PPL perfectly stable at 36.21. It proves that explicitly balancing "forgetting" and "retaining" in the loss function works beautifully.
 * **In QLoRA:** GD's explicit retain-check helps it survive 8-bit quantization much better than GA, keeping the model relatively fluent while still inducing heavy forgetting.
 
 **3. KL Divergence (KL) — The Safest Choice**
